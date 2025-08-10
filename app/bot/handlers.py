@@ -27,6 +27,7 @@ async def cmd_help(message: types.Message) -> None:
 from app.bot.parser import parse_user_input
 from app.services.trends_client import fetch_interest_over_time
 from app.services.analysis import compute_metrics, compute_simple_forecast
+from app.services.plot import render_trend_plot
 
 
 @router.message()
@@ -51,6 +52,18 @@ async def handle_query(message: types.Message) -> None:
             f"seasonality_hint={metrics['seasonality_hint']}, peaks={metrics['peaks_count']}\n"
             f"Прогноз: метод={forecast['method']}, точек={len(forecast['points'])}"
         )
+
+        # Отправка графика как фото
+        try:
+            png_bytes = render_trend_plot(df, forecast)
+            caption = (
+                f"{parsed.query} | {parsed.timeframe} | {country_mark}\n"
+                f"Период: {date_min} — {date_max}"
+            )
+            await message.answer_photo(types.BufferedInputFile(png_bytes, filename="trend.png"), caption=caption)
+        except Exception:
+            # График опционален: не падаем, если не удалось сгенерировать
+            pass
     except Exception as e:
         await message.answer(
             "Ожидаю формат: <запрос>; <период>; <страна>\n"
