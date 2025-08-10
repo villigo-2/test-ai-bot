@@ -28,6 +28,7 @@ from app.bot.parser import parse_user_input
 from app.services.trends_client import fetch_interest_over_time
 from app.services.analysis import compute_metrics, compute_simple_forecast
 from app.services.plot import render_trend_plot
+from app.services.llm_client import summarize
 
 
 @router.message()
@@ -63,6 +64,15 @@ async def handle_query(message: types.Message) -> None:
             await message.answer_photo(types.BufferedInputFile(png_bytes, filename="trend.png"), caption=caption)
         except Exception:
             # График опционален: не падаем, если не удалось сгенерировать
+            pass
+
+        # Краткое резюме через LLM
+        try:
+            summary = summarize(metrics, forecast, locale="ru")
+            if summary:
+                await message.answer(f"Резюме: {summary}")
+        except Exception:
+            # На MVP при сбое LLM просто пропускаем резюме
             pass
     except Exception as e:
         await message.answer(
