@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 import pandas as pd
+import numpy as np
 
 
 def compute_metrics(df: pd.DataFrame) -> Dict[str, Any]:
@@ -47,4 +48,43 @@ def compute_metrics(df: pd.DataFrame) -> Dict[str, Any]:
         "peaks_count": peaks_count,
     }
 
+
+def compute_simple_forecast(
+    df: pd.DataFrame, horizon: int = 8, method: str = "linear"
+) -> Dict[str, Any]:
+    series = df["value"].astype(float).reset_index(drop=True)
+    num_points = len(series)
+    if num_points < 3 or horizon <= 0:
+        return {"method": method, "horizon": horizon, "points": [], "note": "insufficient data"}
+
+    if method == "naive":
+        forecast_values = [float(series.iloc[-1])] * horizon
+    else:
+        x = np.arange(num_points, dtype=float)
+        a, b = np.polyfit(x, series.values, deg=1)
+        x_future = np.arange(num_points, num_points + horizon, dtype=float)
+        forecast_values = list((a * x_future + b).clip(min=0, max=100))
+        method = "linear"
+
+    idx = pd.to_datetime(df.index)
+    inferred = pd.infer_freq(idx) or "D"
+    if inferred.startswith("W"):
+        step = pd.Timedelta(days=7)
+    elif inferred.startswith("M"):
+        step = pd.DateOffset(months=1)
+    else:
+        step = pd.Timedelta(days=1)
+
+    dates = []
+    current = idx[-1]
+    for _ in range(horizon):
+        current = current + step
+        dates.append(pd.Timestamp(current))
+
+    return {
+        "method": method,
+        "horizon": horizon,
+        "points": list(zip(dates, forecast_values)),
+        "note": "simple forecast; low accuracy",
+    }
 
