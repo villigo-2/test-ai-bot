@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import warnings
 from aiogram import Bot, Dispatcher
 from app.config import get_settings
 from app.bot.handlers import router
@@ -9,6 +10,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
+
+warnings.filterwarnings("ignore", category=FutureWarning, module="pytrends")
 
 
 async def main() -> None:
