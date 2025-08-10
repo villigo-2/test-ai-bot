@@ -26,6 +26,7 @@ async def cmd_help(message: types.Message) -> None:
 
 from app.bot.parser import parse_user_input
 from app.services.trends_client import fetch_interest_over_time
+from app.services.analysis import compute_metrics
 
 
 @router.message()
@@ -37,9 +38,16 @@ async def handle_query(message: types.Message) -> None:
         date_min = df.index.min().date()
         date_max = df.index.max().date()
         country_mark = parsed.geo_iso or "world"
+        metrics = compute_metrics(df)
         await message.answer(
-            f"Запрос: {parsed.query}\nПериод: {parsed.timeframe}\nСтрана: {parsed.country} → {country_mark}\n"
-            f"Точек: {points}\nДиапазон: {date_min} — {date_max}"
+            f"Запрос: {parsed.query}\n"
+            f"Период: {parsed.timeframe}\n"
+            f"Страна: {parsed.country} → {country_mark}\n"
+            f"Точек: {points}\n"
+            f"Диапазон: {date_min} — {date_max}\n"
+            f"Метрики: mean={metrics['mean']:.1f}, median={metrics['median']:.1f}, std={metrics['std']:.1f}, "
+            f"min={metrics['min']}, max={metrics['max']}, trend={metrics['trend']}, "
+            f"seasonality_hint={metrics['seasonality_hint']}, peaks={metrics['peaks_count']}"
         )
     except Exception as e:
         await message.answer(
