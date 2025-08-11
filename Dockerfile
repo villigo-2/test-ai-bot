@@ -13,5 +13,3 @@ COPY app/ app/
 COPY env.example ./
 
 CMD ["python", "-m", "app.main"]
-
-
