@@ -1,5 +1,8 @@
 import os
 import time
+import logging
+import random
+import pathlib
 from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
@@ -101,6 +104,7 @@ def summarize(
                 content = str(m.get("content") or "")[:500]
                 if content:
                     history_msgs.append({"role": role, "content": content})
+            t0 = time.perf_counter()
             resp = client.chat.completions.create(
                 model=MODEL,
                 messages=[
@@ -112,11 +116,21 @@ def summarize(
                 timeout=15,
             )
             text = (resp.choices[0].message.content or "").strip()
+            latency_ms = int((time.perf_counter() - t0) * 1000)
+            logging.info("llm.request done model=%s latency_ms=%d", MODEL, latency_ms)
+
+            # sampling
+            sample_rate = float(os.getenv("LLM_SAMPLE_RATE", "0.1"))
+            if random.random() < sample_rate:
+                pathlib.Path("logs").mkdir(parents=True, exist_ok=True)
+                with open("logs/llm_samples.log", "a", encoding="utf-8") as f:
+                    f.write(f"PROMPT:\n{user_prompt}\n---\nANSWER:\n{text}\n===\n")
             return text or ""
         except Exception:
             if attempt == 0:
                 time.sleep(0.6)
             else:
+                logging.error("llm.request error model=%s attempt=%d", MODEL, attempt + 1)
                 return "Краткое резюме временно недоступно. Попробуйте ещё раз позже."
 
     return "Краткое резюме временно недоступно."
