@@ -23,3 +23,8 @@ def parse_user_input(text: str) -> ParsedQuery:
     return ParsedQuery(query=query, timeframe=timeframe, country=country, geo_iso=geo_iso)
 
 
+def try_parse_timeframe(text: str) -> str | None:
+    tf = (text or "").strip().lower()
+    return tf if tf in ALLOWED_TIMEFRAMES else None
+
+

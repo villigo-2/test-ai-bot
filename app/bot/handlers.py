@@ -25,19 +25,30 @@ async def cmd_help(message: types.Message) -> None:
     )
 
 
-from app.bot.parser import parse_user_input
+from app.bot.parser import parse_user_input, try_parse_timeframe
 from app.services.trends_client import fetch_interest_over_time
 from app.services.analysis import compute_metrics, compute_simple_forecast
 from app.services.plot import render_trend_plot
 from app.services.llm_client import summarize
-from app.bot.state import add_message, get_recent
+from app.bot.state import add_message, get_recent, set_last_context, get_last_context
 
 
 @router.message()
 async def handle_query(message: types.Message) -> None:
     try:
-        parsed = parse_user_input(message.text or "")
+        # Поддержка смены периода одним сообщением: "7d"/"30d"/"12m"/"5y"/"all"
+        only_tf = try_parse_timeframe(message.text or "")
+        if only_tf:
+            last = get_last_context(message.chat.id)
+            if not last:
+                raise ValueError("Сначала пришлите полный запрос: <запрос>; <период>; <страна>")
+            query, geo_iso = last
+            parsed_query = type("PQ", (), {"query": query, "geo_iso": geo_iso, "timeframe": only_tf, "country": ""})
+        else:
+            parsed_query = parse_user_input(message.text or "")
+            set_last_context(message.chat.id, parsed_query.query, parsed_query.geo_iso)
         add_message(message.chat.id, "user", message.text or "")
+        parsed = parsed_query
         df = fetch_interest_over_time(parsed.query, parsed.geo_iso, parsed.timeframe)
         points = len(df)
         date_min = df.index.min().date()
