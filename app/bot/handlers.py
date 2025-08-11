@@ -1,4 +1,5 @@
 from aiogram import Router, types
+from aiogram.enums import ParseMode
 from aiogram.filters import Command
 
 
@@ -70,7 +71,7 @@ async def handle_query(message: types.Message) -> None:
         try:
             summary = summarize(metrics, forecast, locale="ru")
             if summary:
-                await message.answer(f"Резюме: {summary}")
+                await message.answer(f"<b>Резюме:</b>\n{summary}", parse_mode=ParseMode.HTML)
         except Exception:
             # На MVP при сбое LLM просто пропускаем резюме
             pass
