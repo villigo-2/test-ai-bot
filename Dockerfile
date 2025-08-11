@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install uv and runtime deps (KISS)
 RUN pip install --no-cache-dir uv
-RUN uv pip install --no-cache-dir aiogram python-dotenv pytrends pandas numpy matplotlib openai
+RUN uv pip install --system --no-cache-dir aiogram python-dotenv pytrends pandas numpy matplotlib openai
 
 COPY app/ app/
 COPY env.example ./
