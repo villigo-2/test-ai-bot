@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
@@ -15,7 +15,7 @@ client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
 SYSTEM_PROMPT_RU = (
     "Ты аналитик. Дай краткий, фактический и структурированный ответ. "
     "Используй только переданные метрики и прогноз, не добавляй внешние данные и домыслы. Формат:\n"
-    "1) Резюме — 1–2 предложения о направлении тренда.\n"
+    "1) 1–2 предложения о направлении тренда.\n"
     "2) Динамика — тренд (up/down/flat), стабильность/волатильность, пики, сезонность (если есть).\n"
     "3) Прогноз — ближайший горизонт: направление, ориентировочный диапазон значений и короткая интерпретация.\n"
     "4) Ограничения — источник (Google Trends, 0–100), простой метод прогноза, низкая точность.\n"
@@ -83,17 +83,29 @@ def _build_user_prompt(metrics: Dict[str, Any], forecast: Dict[str, Any]) -> str
     return "\n".join(lines)
 
 
-def summarize(metrics: Dict[str, Any], forecast: Dict[str, Any], locale: str = "ru") -> str:
+def summarize(
+    metrics: Dict[str, Any],
+    forecast: Dict[str, Any],
+    locale: str = "ru",
+    history: Optional[List[Dict[str, Any]]] = None,
+) -> str:
     system_prompt = SYSTEM_PROMPT_RU if locale.lower().startswith("ru") else SYSTEM_PROMPT_EN
     user_prompt = _build_user_prompt(metrics, forecast)
 
     # Один ретрай с небольшим бэкофом
     for attempt in range(2):
         try:
+            history_msgs: List[Dict[str, str]] = []
+            for m in (history or []):
+                role = "user" if (m.get("role") == "user") else "assistant"
+                content = str(m.get("content") or "")[:500]
+                if content:
+                    history_msgs.append({"role": role, "content": content})
             resp = client.chat.completions.create(
                 model=MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
+                    *history_msgs,
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.2,

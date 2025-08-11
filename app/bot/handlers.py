@@ -30,12 +30,14 @@ from app.services.trends_client import fetch_interest_over_time
 from app.services.analysis import compute_metrics, compute_simple_forecast
 from app.services.plot import render_trend_plot
 from app.services.llm_client import summarize
+from app.bot.state import add_message, get_recent
 
 
 @router.message()
 async def handle_query(message: types.Message) -> None:
     try:
         parsed = parse_user_input(message.text or "")
+        add_message(message.chat.id, "user", message.text or "")
         df = fetch_interest_over_time(parsed.query, parsed.geo_iso, parsed.timeframe)
         points = len(df)
         date_min = df.index.min().date()
@@ -69,9 +71,11 @@ async def handle_query(message: types.Message) -> None:
 
         # Краткое резюме через LLM
         try:
-            summary = summarize(metrics, forecast, locale="ru")
+            history = get_recent(message.chat.id, limit=3)
+            summary = summarize(metrics, forecast, locale="ru", history=history)
             if summary:
                 await message.answer(f"<b>Резюме:</b>\n{summary}", parse_mode=ParseMode.HTML)
+                add_message(message.chat.id, "assistant", summary)
         except Exception:
             # На MVP при сбое LLM просто пропускаем резюме
             pass
