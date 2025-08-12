@@ -11,7 +11,7 @@ async def cmd_start(message: types.Message) -> None:
     await message.answer(
         "Привет! Я бот-аналитик Google Trends.\n"
         "Формат запроса: запрос; период; страна\n"
-        "Пример: chatgpt; 12m; Казахстан\n\n"
+        "Пример: iphone; 12m; Азербайджан\n\n"
         "Справка: /help"
     )
 
@@ -21,7 +21,7 @@ async def cmd_help(message: types.Message) -> None:
     await message.answer(
         "Формат: <запрос>; <период>; <страна>\n"
         "Периоды: 7d, 30d, 12m, 5y, all\n"
-        "Пример: chatgpt; 12m; Казахстан"
+        "Пример: iphone; 12m; Азербайджан\n\n"
     )
 
 
@@ -94,7 +94,7 @@ async def handle_query(message: types.Message) -> None:
         await message.answer(
             "Ожидаю формат: <запрос>; <период>; <страна>\n"
             "Периоды: 7d, 30d, 12m, 5y, all\n"
-            "Пример: chatgpt; 12m; Казахстан\n\n"
+            "Пример: iphone; 12m; Азербайджан\n\n"
             f"Ошибка: {e}"
         )
 
