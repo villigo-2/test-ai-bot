@@ -18,5 +18,7 @@ steps:
     - '--quiet'
     - '--set-env-vars'
     - 'ENV=production'
+    - '--update-secrets'
+    - 'BOT_TOKEN=telegram-bot-token:latest,OPENROUTER_API_KEY=openrouter-api-key:latest'
 images:
 - 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}'

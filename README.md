@@ -68,20 +68,52 @@ BOT_TOKEN=xxx OPENROUTER_API_KEY=yyy OPENROUTER_MODEL=gpt-4o-mini make docker-ru
    - Google Cloud SDK (`gcloud`) installed and configured.
    - A Google Cloud project with billing enabled.
    - Artifact Registry API and Cloud Build API enabled.
-   - `gcloud auth login` and `gcloud config set project YOUR_PROJECT_ID`.
+   - Run `gcloud auth login` and `gcloud config set project YOUR_PROJECT_ID`.
+   - Create an Artifact Registry repository (run this command once):
+     ```bash
+     gcloud artifacts repositories create telegram-bot \
+         --repository-format=docker \
+         --location=europe-west1 \
+         --description="Docker repository for Telegram bot"
+     ```
 
-2. **Configuration**:
-   - Create a `.env` file from `env.example` and fill in your `BOT_TOKEN`.
-   - In `env.example`, set your `GCP_PROJECT_ID` and `GCP_REGION`.
+2. **Setup Secrets (First Time Only)**:
+   - Enable the Secret Manager API.
+   - Create secrets for your bot token and API keys. This is the secure way to handle credentials.
+     ```bash
+     # Create bot token secret
+     echo -n "YOUR_TELEGRAM_BOT_TOKEN" | \
+       gcloud secrets create telegram-bot-token --data-file=- --project=umico-client
 
-3. **Build and Deploy**:
+     # Create OpenRouter API key secret (optional)
+     echo -n "YOUR_OPENROUTER_API_KEY" | \
+       gcloud secrets create openrouter-api-key --data-file=- --project=umico-client
+     ```
+   - Grant the Cloud Run service account access to these secrets. Find your service account email (it looks like `service-<project-number>@gcp-sa-run.iam.gserviceaccount.com`) in the IAM section of the Google Cloud Console.
+     ```bash
+     gcloud secrets add-iam-policy-binding telegram-bot-token \
+       --member="serviceAccount:YOUR_SERVICE_ACCOUNT_EMAIL" \
+       --role="roles/secretmanager.secretAccessor" \
+       --project=umico-client
+
+     gcloud secrets add-iam-policy-binding openrouter-api-key \
+       --member="serviceAccount:YOUR_SERVICE_ACCOUNT_EMAIL" \
+       --role="roles/secretmanager.secretAccessor" \
+       --project=umico-client
+     ```
+
+3. **Configuration**:
+   - Create a `.env` file from `env.example` and fill in your `BOT_TOKEN` for local development.
+   - In `env.example`, ensure your `GCP_PROJECT_ID` and `GCP_REGION` are set correctly.
+
+4. **Build and Deploy**:
    - Run the Cloud Build pipeline:
      ```bash
      make cloud-build
      ```
    - This will build the Docker image, push it to Artifact Registry, and deploy it to Cloud Run.
 
-4. **Set the Webhook**:
+5. **Set the Webhook**:
    - After deployment, Cloud Run will provide a service URL. It should look like: `https://telegram-bot-app-<project-hash>-<region>.a.run.app`.
    - Set the Telegram webhook to this URL:
      ```bash
@@ -89,9 +121,9 @@ BOT_TOKEN=xxx OPENROUTER_API_KEY=yyy OPENROUTER_MODEL=gpt-4o-mini make docker-ru
      ```
    - You will be prompted to enter your bot token and the webhook URL. The webhook path is `/webhook` by default. Your full webhook URL will be `https://<service-url>/webhook`.
 
-5. **Set Environment Variables in Cloud Run**:
-   - Go to your service in the Google Cloud Console.
-   - Edit the deployment and add the required environment variables (`BOT_TOKEN`, etc.).
+6. **Environment Variables**:
+   - The deployment process automatically maps the secrets (`BOT_TOKEN`, `OPENROUTER_API_KEY`) to environment variables in Cloud Run.
+   - You can add or modify other non-sensitive variables (like `OPENROUTER_MODEL`) directly in the Cloud Run service settings.
 
 ### Структура
 ```

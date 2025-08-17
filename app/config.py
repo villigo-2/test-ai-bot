@@ -14,6 +14,9 @@ except Exception:
 @dataclass(frozen=True)
 class Settings:
     bot_token: str
+    openrouter_api_key: str | None
+    openrouter_model: str | None
+    openrouter_base_url: str | None
     web_server_host: str
     web_server_port: int
     webhook_path: str
@@ -56,6 +59,9 @@ def get_settings() -> Settings:
 
     return Settings(
         bot_token=os.environ["BOT_TOKEN"],
+        openrouter_api_key=os.environ.get("OPENROUTER_API_KEY"),
+        openrouter_model=os.environ.get("OPENROUTER_MODEL"),
+        openrouter_base_url=os.environ.get("OPENROUTER_BASE_URL"),
         web_server_host=host,
         web_server_port=port,
         webhook_path=webhook_path,
