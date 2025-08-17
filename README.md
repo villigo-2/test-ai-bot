@@ -63,6 +63,36 @@ make docker-build
 BOT_TOKEN=xxx OPENROUTER_API_KEY=yyy OPENROUTER_MODEL=gpt-4o-mini make docker-run
 ```
 
+### Google Cloud Run Deployment
+1. **Prerequisites**:
+   - Google Cloud SDK (`gcloud`) installed and configured.
+   - A Google Cloud project with billing enabled.
+   - Artifact Registry API and Cloud Build API enabled.
+   - `gcloud auth login` and `gcloud config set project YOUR_PROJECT_ID`.
+
+2. **Configuration**:
+   - Create a `.env` file from `env.example` and fill in your `BOT_TOKEN`.
+   - In `env.example`, set your `GCP_PROJECT_ID` and `GCP_REGION`.
+
+3. **Build and Deploy**:
+   - Run the Cloud Build pipeline:
+     ```bash
+     make cloud-build
+     ```
+   - This will build the Docker image, push it to Artifact Registry, and deploy it to Cloud Run.
+
+4. **Set the Webhook**:
+   - After deployment, Cloud Run will provide a service URL. It should look like: `https://telegram-bot-app-<project-hash>-<region>.a.run.app`.
+   - Set the Telegram webhook to this URL:
+     ```bash
+     make set-telegram-webhook
+     ```
+   - You will be prompted to enter your bot token and the webhook URL. The webhook path is `/webhook` by default. Your full webhook URL will be `https://<service-url>/webhook`.
+
+5. **Set Environment Variables in Cloud Run**:
+   - Go to your service in the Google Cloud Console.
+   - Edit the deployment and add the required environment variables (`BOT_TOKEN`, etc.).
+
 ### Структура
 ```
 app/
