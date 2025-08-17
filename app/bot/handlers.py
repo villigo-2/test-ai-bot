@@ -21,7 +21,7 @@ async def cmd_start(message: types.Message) -> None:
 async def cmd_help(message: types.Message) -> None:
     await message.answer(
         "Формат: <запрос>; <период>; <страна>\n"
-        "Периоды: 7d, 30d, 12m, 5y, all\n"
+        "Периоды: 7d, 30d, 90d, 12m, 5y, all\n"
         "Пример: iphone; 12m; Азербайджан\n\n"
     )
 

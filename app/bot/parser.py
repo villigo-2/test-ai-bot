@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
-ALLOWED_TIMEFRAMES = {"7d", "30d", "12m", "5y", "all"}
+ALLOWED_TIMEFRAMES = {"7d", "30d", "90d", "12m", "5y", "all"}
 
 
 class ParsedQuery(NamedTuple):
@@ -16,7 +16,7 @@ def parse_user_input(text: str) -> ParsedQuery:
         raise ValueError("Ожидаю формат: <термин>; <период>; <страна>")
     query, timeframe, country = parts
     if timeframe not in ALLOWED_TIMEFRAMES:
-        raise ValueError("Недопустимый период (7d, 30d, 12m, 5y, all)")
+        raise ValueError("Недопустимый период (7d, 30d, 90d, 12m, 5y, all)")
     from app.utils.country_map import to_iso
 
     geo_iso = to_iso(country)
