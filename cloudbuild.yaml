@@ -1,25 +1,65 @@
 steps:
-# Build Docker image
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}', '.']
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}']
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: gcloud
-  args:
-    - 'run'
-    - 'deploy'
-    - 'test-telegram-bot'
-    - '--image'
-    - 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}'
-    - '--region'
-    - 'europe-west1'
-    - '--platform'
-    - 'managed'
-    - '--quiet'
-    - '--set-env-vars'
-    - 'ENV=production,OPENROUTER_MODEL=gpt-4o-mini,OPENROUTER_BASE_URL=https://openrouter.ai/api/v1,GCP_PROJECT_ID=umico-client,GCP_REGION=europe-west1,GCP_SERVICE_NAME=test-telegram-bot,WEBHOOK_URL=https://test-telegram-bot-141614707906.europe-west1.run.app/webhook'
-    - '--update-secrets'
-    - 'BOT_TOKEN=telegram-bot-token:latest,OPENROUTER_API_KEY=openrouter-api-key:latest'
+  # Build and push Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:${SHORT_SHA}'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:${SHORT_SHA}'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:${SHORT_SHA}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--quiet'
+      - '--set-env-vars'
+      - 'ENV=production,OPENROUTER_MODEL=gpt-4o-mini,OPENROUTER_BASE_URL=https://openrouter.ai/api/v1'
+      - '--update-secrets'
+      - 'BOT_TOKEN=telegram-bot-token:latest,OPENROUTER_API_KEY=openrouter-api-key:latest'
+
+  # Allow unauthenticated access for Telegram webhook
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'set-iam-policy'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'services'
+      - 'add-iam-policy-binding'
+      - '${_SERVICE_NAME}'
+      - '--region=${_REGION}'
+      - '--member=allUsers'
+      - '--role=roles/run.invoker'
+      - '--quiet'
+    waitFor: ['deploy']
+
+  # Automatically set Telegram webhook
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'set-webhook'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        SERVICE_URL=$$(gcloud run services describe ${_SERVICE_NAME} --platform managed --region ${_REGION} --format 'value(status.url)') && \
+        BOT_TOKEN=$$(gcloud secrets versions access latest --secret=telegram-bot-token) && \
+        WEBHOOK_URL="$${SERVICE_URL}/webhook" && \
+        echo "Setting webhook to $${WEBHOOK_URL}" && \
+        curl -s -F "url=$${WEBHOOK_URL}" "https://api.telegram.org/bot$${BOT_TOKEN}/setWebhook"
+    waitFor: ['set-iam-policy']
+
 images:
-- 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_SERVICE_NAME}:${SHORT_SHA}'
