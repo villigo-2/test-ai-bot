@@ -9,7 +9,7 @@ docker-run:
 
 # Google Cloud deployment
 cloud-build:
-	gcloud builds submit --config cloudbuild.yaml .
+	gcloud builds submit --config cloudbuild.yaml --substitutions=SHORT_SHA=$(shell git rev-parse --short HEAD) .
 
 set-telegram-webhook:
 	@echo "Setting up Telegram webhook..."

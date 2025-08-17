@@ -1,16 +1,16 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:$COMMIT_SHA', '.']
+  args: ['build', '-t', 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}', '.']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:$COMMIT_SHA']
+  args: ['push', 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}']
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
   args:
     - 'run'
     - 'deploy'
-    - 'telegram-bot-app'
+    - 'test-telegram-bot'
     - '--image'
-    - 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:$COMMIT_SHA'
+    - 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}'
     - '--region'
     - 'europe-west1'
     - '--platform'
@@ -19,4 +19,4 @@ steps:
     - '--set-env-vars'
     - 'ENV=production'
 images:
-- 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:$COMMIT_SHA'
+- 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}'
