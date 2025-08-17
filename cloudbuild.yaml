@@ -18,7 +18,7 @@ steps:
     - 'managed'
     - '--quiet'
     - '--set-env-vars'
-    - 'ENV=production,OPENROUTER_MODEL=gpt-4o-mini,OPENROUTER_BASE_URL=https://openrouter.ai/api/v1,GCP_PROJECT_ID=umico-client,GCP_REGION=europe-west1,GCP_SERVICE_NAME=test-telegram-bot'
+    - 'ENV=production,OPENROUTER_MODEL=gpt-4o-mini,OPENROUTER_BASE_URL=https://openrouter.ai/api/v1,GCP_PROJECT_ID=umico-client,GCP_REGION=europe-west1,GCP_SERVICE_NAME=test-telegram-bot,WEBHOOK_URL=https://test-telegram-bot-141614707906.europe-west1.run.app/webhook'
     - '--update-secrets'
     - 'BOT_TOKEN=telegram-bot-token:latest,OPENROUTER_API_KEY=openrouter-api-key:latest'
 images:

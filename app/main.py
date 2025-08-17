@@ -51,7 +51,6 @@ async def main() -> None:
             bot=bot,
         )
         webhook_requests_handler.register(app, path=settings.webhook_path)
-        setup_application(app, dp, bot=bot, base_url=settings.webhook_url, webhook_path=settings.webhook_path)
 
         # Health check endpoint
         app.router.add_get("/healthz", lambda request: web.Response(text="OK"))

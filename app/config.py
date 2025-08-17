@@ -39,17 +39,11 @@ def get_settings() -> Settings:
         port = int(os.environ.get("PORT", 8080))
         host = os.environ.get("WEB_SERVER_HOST", "0.0.0.0")
         webhook_path = os.environ.get("WEBHOOK_PATH", "/webhook")
-        # Public URL for the webhook.
-        # Format: https://<service-name>-<project-hash>-<region>.a.run.app
-        project_id = os.environ.get("GCP_PROJECT_ID")
-        region = os.environ.get("GCP_REGION")
-        service_name = os.environ.get("GCP_SERVICE_NAME", "telegram-bot")
-
-        if project_id and region:
-             webhook_url = f"https://{service_name}-{project_id}-{region}.a.run.app{webhook_path}"
-        else:
-            # Fallback for other hosting or manual URL
-            webhook_url = os.environ.get("WEBHOOK_URL", "")
+        # Public URL for the webhook must be explicitly set in production
+        # Cloud Run URLs have unpredictable hashes, so we can't auto-generate them
+        webhook_url = os.environ.get("WEBHOOK_URL")
+        if not webhook_url:
+            raise RuntimeError("WEBHOOK_URL environment variable is required in production")
     else:
         # For local development, we use polling, so webhook settings are not critical.
         port = int(os.environ.get("PORT", 8080))
