@@ -23,6 +23,18 @@ def render_trend_plot(df: pd.DataFrame, forecast: Optional[Dict[str, Any]] = Non
     ax.set_ylim(bottom=0)
     ax.grid(True, alpha=0.3)
     ax.legend(loc="upper left")
+    
+    # Специальная обработка для периодов с наезжанием дат
+    num_days = len(df)
+    if 25 <= num_days <= 35:
+        # Для 30 дней - поворот меток
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+    elif 80 <= num_days <= 100:
+        # Для 90 дней - недельные интервалы с поворотом
+        import matplotlib.dates as mdates
+        ax.xaxis.set_major_locator(mdates.WeekdayLocator(interval=2))
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+    
     fig.tight_layout()
 
     buf = BytesIO()
