@@ -32,15 +32,15 @@ def fetch_interest_over_time(query: str, geo: str, timeframe: str, hl: str = "en
     
     for attempt in range(max_retries):
         try:
-            # Добавляем случайную задержку для избежания rate limiting
+            # Добавляем случайную задержку для избежания rate limiting только при ретраях
             if attempt > 0:
                 delay = base_delay * (2 ** (attempt - 1)) + random.uniform(0.5, 1.5)
                 logging.info(f"trends.retry attempt={attempt + 1} delay={delay:.1f}s query={query}")
                 time.sleep(delay)
             
-            # Базовая задержка для уважения к rate limits даже при первом запросе
-            if attempt == 0:
-                time.sleep(random.uniform(0.5, 1.0))
+            # УДАЛЯЕМ эти строки - они замедляют каждый запрос:
+            # if attempt == 0:
+            #     time.sleep(random.uniform(0.5, 1.0))
             
             pytrends = TrendReq(hl=hl, tz=0)
             tf_norm = _normalize_timeframe(timeframe)

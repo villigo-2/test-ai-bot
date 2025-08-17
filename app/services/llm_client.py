@@ -138,9 +138,9 @@ def summarize(
             return text or ""
         except Exception:
             if attempt == 0:
-                time.sleep(0.6)
+                time.sleep(0.2)  # Уменьшаем с 0.6 до 0.2 сек
             else:
-                model = _get_model()  # Get model for logging in case of error
+                model = _get_model()
                 logging.error("llm.request error model=%s attempt=%d", model, attempt + 1)
                 return "Краткое резюме временно недоступно. Попробуйте ещё раз позже."
 
