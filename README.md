@@ -90,18 +90,21 @@ BOT_TOKEN=xxx OPENROUTER_API_KEY=yyy OPENROUTER_MODEL=gpt-4o-mini make docker-ru
      # Edit .env and add your real BOT_TOKEN and OPENROUTER_API_KEY
      ```
 
-4. **Build and Deploy**:
-   - Run the Cloud Build pipeline (secrets will be created automatically from your `.env` file):
+4. **Setup Secrets (First Time Only)**:
+   - Create secrets in Google Secret Manager from your `.env` file:
+     ```bash
+     make setup-secrets
+     ```
+   - This will create `telegram-bot-token` and `openrouter-api-key` secrets and grant access to them.
+
+5. **Build and Deploy**:
+   - Run the Cloud Build pipeline:
      ```bash
      make cloud-build
      ```
-   - This will:
-     1. Create secrets in Google Secret Manager from your `.env` file
-     2. Grant access to these secrets for the Cloud Run service account
-     3. Build the Docker image and push it to Artifact Registry
-     4. Deploy the service to Cloud Run
+   - This will build the Docker image, push it to Artifact Registry, and deploy the service to Cloud Run.
 
-5. **Set the Webhook**:
+6. **Set the Webhook**:
    - After deployment, Cloud Run will provide a service URL. It should look like: `https://telegram-bot-app-<project-hash>-<region>.a.run.app`.
    - Set the Telegram webhook to this URL:
      ```bash
@@ -109,10 +112,10 @@ BOT_TOKEN=xxx OPENROUTER_API_KEY=yyy OPENROUTER_MODEL=gpt-4o-mini make docker-ru
      ```
    - You will be prompted to enter your bot token and the webhook URL. The webhook path is `/webhook` by default. Your full webhook URL will be `https://<service-url>/webhook`.
 
-6. **Environment Variables**:
+7. **Environment Variables**:
    - The deployment process automatically creates secrets and maps them (`BOT_TOKEN`, `OPENROUTER_API_KEY`) to environment variables in Cloud Run.
    - Other non-sensitive variables (like `OPENROUTER_MODEL`) are set directly as environment variables.
-   - If you need to update secrets later, modify your `.env` file and run `make cloud-build` again.
+   - If you need to update secrets later, modify your `.env` file and run `make setup-secrets` again.
 
 ### Структура
 ```

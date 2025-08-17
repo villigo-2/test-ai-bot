@@ -1,8 +1,4 @@
 steps:
-# Setup secrets from .env file
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'bash'
-  args: ['./setup-secrets.sh']
 # Build Docker image
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}', '.']

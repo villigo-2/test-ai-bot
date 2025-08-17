@@ -8,9 +8,12 @@ docker-run:
 	docker run --rm --env-file .env test-ai-bot
 
 # Google Cloud deployment
-cloud-build:
+setup-secrets:
 	@if [ ! -f .env ]; then echo "Error: .env file not found. Please create it from env.example"; exit 1; fi
 	chmod +x setup-secrets.sh
+	./setup-secrets.sh
+
+cloud-build:
 	gcloud builds submit --config cloudbuild.yaml --substitutions=SHORT_SHA=$(shell git rev-parse --short HEAD) .
 
 set-telegram-webhook:
