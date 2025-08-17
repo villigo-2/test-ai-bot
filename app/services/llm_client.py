@@ -14,7 +14,11 @@ def _get_client():
     settings = get_settings()
     base_url = settings.openrouter_base_url or "https://openrouter.ai/api/v1"
     api_key = settings.openrouter_api_key or ""
-    return OpenAI(base_url=base_url, api_key=api_key)
+    return OpenAI(
+        base_url=base_url, 
+        api_key=api_key,
+        timeout=4.0  # Строгий таймаут для быстрого отклика
+    )
 
 
 def _get_model():
@@ -123,7 +127,7 @@ def summarize(
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.2,
-                timeout=15,
+                timeout=4,  # Быстрый отклик - 4 секунды максимум
             )
             text = (resp.choices[0].message.content or "").strip()
             latency_ms = int((time.perf_counter() - t0) * 1000)
