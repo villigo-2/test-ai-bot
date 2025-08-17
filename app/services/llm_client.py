@@ -6,13 +6,21 @@ import pathlib
 from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
+from app.config import get_settings
 
 
-BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-MODEL = os.getenv("OPENROUTER_MODEL", "gpt-4o-mini")
-API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+def _get_client():
+    """Get OpenAI client with current settings"""
+    settings = get_settings()
+    base_url = settings.openrouter_base_url or "https://openrouter.ai/api/v1"
+    api_key = settings.openrouter_api_key or ""
+    return OpenAI(base_url=base_url, api_key=api_key)
 
-client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
+
+def _get_model():
+    """Get current model from settings"""
+    settings = get_settings()
+    return settings.openrouter_model or "gpt-4o-mini"
 
 
 SYSTEM_PROMPT_RU = (
@@ -105,8 +113,10 @@ def summarize(
                 if content:
                     history_msgs.append({"role": role, "content": content})
             t0 = time.perf_counter()
+            client = _get_client()
+            model = _get_model()
             resp = client.chat.completions.create(
-                model=MODEL,
+                model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     *history_msgs,
@@ -117,7 +127,7 @@ def summarize(
             )
             text = (resp.choices[0].message.content or "").strip()
             latency_ms = int((time.perf_counter() - t0) * 1000)
-            logging.info("llm.request done model=%s latency_ms=%d", MODEL, latency_ms)
+            logging.info("llm.request done model=%s latency_ms=%d", model, latency_ms)
 
             # sampling
             sample_rate = float(os.getenv("LLM_SAMPLE_RATE", "0.1"))
@@ -130,7 +140,8 @@ def summarize(
             if attempt == 0:
                 time.sleep(0.6)
             else:
-                logging.error("llm.request error model=%s attempt=%d", MODEL, attempt + 1)
+                model = _get_model()  # Get model for logging in case of error
+                logging.error("llm.request error model=%s attempt=%d", model, attempt + 1)
                 return "Краткое резюме временно недоступно. Попробуйте ещё раз позже."
 
     return "Краткое резюме временно недоступно."

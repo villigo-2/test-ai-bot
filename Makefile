@@ -9,6 +9,8 @@ docker-run:
 
 # Google Cloud deployment
 cloud-build:
+	@if [ ! -f .env ]; then echo "Error: .env file not found. Please create it from env.example"; exit 1; fi
+	chmod +x setup-secrets.sh
 	gcloud builds submit --config cloudbuild.yaml --substitutions=SHORT_SHA=$(shell git rev-parse --short HEAD) .
 
 set-telegram-webhook:

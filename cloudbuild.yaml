@@ -1,4 +1,9 @@
 steps:
+# Setup secrets from .env file
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args: ['./setup-secrets.sh']
+# Build Docker image
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'europe-west1-docker.pkg.dev/umico-client/telegram-bot/telegram-bot-app:${SHORT_SHA}', '.']
 - name: 'gcr.io/cloud-builders/docker'
@@ -17,7 +22,7 @@ steps:
     - 'managed'
     - '--quiet'
     - '--set-env-vars'
-    - 'ENV=production'
+    - 'ENV=production,OPENROUTER_MODEL=gpt-4o-mini,OPENROUTER_BASE_URL=https://openrouter.ai/api/v1,GCP_PROJECT_ID=umico-client,GCP_REGION=europe-west1,GCP_SERVICE_NAME=test-telegram-bot'
     - '--update-secrets'
     - 'BOT_TOKEN=telegram-bot-token:latest,OPENROUTER_API_KEY=openrouter-api-key:latest'
 images:

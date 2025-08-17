@@ -25,6 +25,16 @@ async def on_shutdown(bot: Bot):
     await bot.delete_webhook()
 
 
+# Wrapper functions for aiogram event handlers
+async def startup_handler(dispatcher, bot):
+    settings = get_settings()
+    await on_startup(bot, settings.webhook_url.rstrip(settings.webhook_path), settings.webhook_path)
+
+
+async def shutdown_handler(dispatcher, bot):
+    await on_shutdown(bot)
+
+
 async def main() -> None:
     settings = get_settings()
     bot = Bot(token=settings.bot_token)
@@ -32,8 +42,8 @@ async def main() -> None:
     dp.include_router(router)
 
     if settings.webhook_url:
-        dp.startup.register(on_startup)
-        dp.shutdown.register(on_shutdown)
+        dp.startup.register(startup_handler)
+        dp.shutdown.register(shutdown_handler)
 
         app = web.Application()
         webhook_requests_handler = SimpleRequestHandler(
