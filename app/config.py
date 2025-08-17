@@ -13,6 +13,7 @@ except Exception:
 
 @dataclass(frozen=True)
 class Settings:
+    is_production: bool
     bot_token: str
     openrouter_api_key: str | None
     openrouter_model: str | None
@@ -39,19 +40,17 @@ def get_settings() -> Settings:
         port = int(os.environ.get("PORT", 8080))
         host = os.environ.get("WEB_SERVER_HOST", "0.0.0.0")
         webhook_path = os.environ.get("WEBHOOK_PATH", "/webhook")
-        # Public URL for the webhook must be explicitly set in production
-        # Cloud Run URLs have unpredictable hashes, so we can't auto-generate them
-        webhook_url = os.environ.get("WEBHOOK_URL")
-        if not webhook_url:
-            raise RuntimeError("WEBHOOK_URL environment variable is required in production")
+        # WEBHOOK_URL is not needed at startup in production anymore, it's set by the pipeline
+        webhook_url = os.environ.get("WEBHOOK_URL", "")
     else:
         # For local development, we use polling, so webhook settings are not critical.
         port = int(os.environ.get("PORT", 8080))
         host = os.environ.get("WEB_SERVER_HOST", "127.0.0.1")
         webhook_path = os.environ.get("WEBHOOK_PATH", "/webhook")
-        webhook_url = os.environ.get("WEBHOOK_URL", "") # Only if you use ngrok locally
+        webhook_url = os.environ.get("WEBHOOK_URL", "")  # Only if you use ngrok locally
 
     return Settings(
+        is_production=is_production,
         bot_token=os.environ["BOT_TOKEN"],
         openrouter_api_key=os.environ.get("OPENROUTER_API_KEY"),
         openrouter_model=os.environ.get("OPENROUTER_MODEL"),

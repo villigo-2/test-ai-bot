@@ -111,11 +111,29 @@ async def handle_query(message: types.Message) -> None:
             logging.warning("llm.summary_failed chat_id=%d error=%s", chat_id, str(llm_error))
             pass
     except Exception as e:
-        logging.error("handler.error chat_id=%d text=%s error=%s", chat_id, user_text, str(e))
-        await message.answer(
-            "Ожидаю формат: <запрос>; <период>; <страна>\n"
-            "Периоды: 7d, 30d, 12m, 5y, all\n"
-            "Пример: chatgpt; 12m; Казахстан\n\n"
-            f"Ошибка: {e}"
-        )
+        error_msg = str(e)
+        logging.error("handler.error chat_id=%d text=%s error=%s", chat_id, user_text, error_msg)
+        
+        # Более понятные сообщения для пользователя
+        if "временно недоступен из-за ограничений запросов" in error_msg:
+            await message.answer(
+                "🚫 Google Trends временно ограничил доступ к данным.\n"
+                "⏰ Попробуйте повторить запрос через несколько минут.\n\n"
+                "Это происходит при большом количестве запросов к сервису."
+            )
+        elif "Данные не найдены" in error_msg:
+            await message.answer(
+                "❌ Данные не найдены для вашего запроса.\n"
+                "Попробуйте:\n"
+                "• Изменить ключевое слово\n"
+                "• Выбрать другой период или страну\n"
+                "• Использовать более популярные термины"
+            )
+        else:
+            await message.answer(
+                "Ожидаю формат: <запрос>; <период>; <страна>\n"
+                "Периоды: 7d, 30d, 90d, 12m, 5y, all\n"
+                "Пример: chatgpt; 12m; Казахстан\n\n"
+                f"Ошибка: {error_msg}"
+            )
 

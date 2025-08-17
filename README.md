@@ -63,59 +63,56 @@ make docker-build
 BOT_TOKEN=xxx OPENROUTER_API_KEY=yyy OPENROUTER_MODEL=gpt-4o-mini make docker-run
 ```
 
-### Google Cloud Run Deployment
-1. **Prerequisites**:
-   - Google Cloud SDK (`gcloud`) installed and configured.
-   - A Google Cloud project with billing enabled.
-   - Artifact Registry API and Cloud Build API enabled.
-   - Run `gcloud auth login` and `gcloud config set project YOUR_PROJECT_ID`.
-   - Create an Artifact Registry repository (run this command once):
+### Развёртывание в Google Cloud Run
+1. **Предварительные требования**:
+   - Установленный и настроенный Google Cloud SDK (`gcloud`).
+   - Проект Google Cloud с активированным биллингом.
+   - Включённые API: Artifact Registry и Cloud Build.
+   - Выполните `gcloud auth login` и `gcloud config set project YOUR_PROJECT_ID`.
+   - Создайте репозиторий в Artifact Registry (выполняется один раз). **Важно**: `location` и `repository-name` должны совпадать с теми, что вы укажете при запуске `make cloud-build`.
      ```bash
-     gcloud artifacts repositories create telegram-bot \
+     gcloud artifacts repositories create YOUR_REPO_NAME \
          --repository-format=docker \
-         --location=europe-west1 \
+         --location=YOUR_REGION \
          --description="Docker repository for Telegram bot"
      ```
 
-2. **Enable Required APIs**:
-   - Enable the Secret Manager API and Cloud Build API if not already enabled:
+2. **Включение необходимых API**:
+   - Активируйте Secret Manager API и Cloud Build API, если они ещё не включены:
      ```bash
-     gcloud services enable secretmanager.googleapis.com cloudbuild.googleapis.com --project=umico-client
+     gcloud services enable secretmanager.googleapis.com cloudbuild.googleapis.com --project=YOUR_PROJECT_ID
      ```
 
-3. **Configuration**:
-   - Create a `.env` file from `env.example` and fill in your credentials:
+3. **Конфигурация**:
+   - Создайте файл `.env` из `env.example` и заполните ваши данные:
      ```bash
      cp env.example .env
-     # Edit .env and add your real BOT_TOKEN and OPENROUTER_API_KEY
+     # Отредактируйте .env и добавьте ваши реальные BOT_TOKEN и OPENROUTER_API_KEY
      ```
 
-4. **Setup Secrets (First Time Only)**:
-   - Create secrets in Google Secret Manager from your `.env` file:
+4. **Настройка секретов (только при первой установке)**:
+   - Создайте секреты в Google Secret Manager из вашего файла `.env`:
      ```bash
      make setup-secrets
      ```
-   - This will create `telegram-bot-token` and `openrouter-api-key` secrets and grant access to them.
+   - Эта команда создаст секреты `telegram-bot-token` и `openrouter-api-key` и предоставит к ним доступ.
 
-5. **Build and Deploy**:
-   - Run the Cloud Build pipeline:
+5. **Сборка, развёртывание и установка вебхука**:
+   - Запустите единую команду для всего процесса:
      ```bash
      make cloud-build
      ```
-   - This will build the Docker image, push it to Artifact Registry, and deploy the service to Cloud Run.
+   - Вам будет предложено ввести:
+     - `GCP Project ID` (ID вашего проекта)
+     - `GCP Region` (например, `europe-west1`)
+     - `Service Name` (имя для сервиса в Cloud Run, например, `telegram-bot-app`)
+     - `Artifact Registry Repo Name` (имя репозитория, созданного на шаге 1)
+   - Скрипт автоматически соберёт Docker-образ, загрузит его в Artifact Registry, развернёт сервис в Cloud Run и установит вебхук Telegram. **Никаких ручных действий больше не требуется.**
 
-6. **Set the Webhook**:
-   - After deployment, Cloud Run will provide a service URL. It should look like: `https://telegram-bot-app-<project-hash>-<region>.a.run.app`.
-   - Set the Telegram webhook to this URL:
-     ```bash
-     make set-telegram-webhook
-     ```
-   - You will be prompted to enter your bot token and the webhook URL. The webhook path is `/webhook` by default. Your full webhook URL will be `https://<service-url>/webhook`.
-
-7. **Environment Variables**:
-   - The deployment process automatically creates secrets and maps them (`BOT_TOKEN`, `OPENROUTER_API_KEY`) to environment variables in Cloud Run.
-   - Other non-sensitive variables (like `OPENROUTER_MODEL`) are set directly as environment variables.
-   - If you need to update secrets later, modify your `.env` file and run `make setup-secrets` again.
+6. **Переменные окружения**:
+   - Процесс развёртывания автоматически создаёт секреты и сопоставляет их (`BOT_TOKEN`, `OPENROUTER_API_KEY`) с переменными окружения в Cloud Run.
+   - Другие нечувствительные переменные (например, `OPENROUTER_MODEL`) устанавливаются напрямую.
+   - Если вам понадобится обновить секреты, измените ваш файл `.env` и снова выполните `make setup-secrets`.
 
 ### Структура
 ```

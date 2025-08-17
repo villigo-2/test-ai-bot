@@ -16,35 +16,14 @@ logging.basicConfig(
 warnings.filterwarnings("ignore", category=FutureWarning, module="pytrends")
 
 
-async def on_startup(bot: Bot, base_url: str, webhook_path: str):
-    webhook_url = f"{base_url}{webhook_path}"
-    await bot.set_webhook(webhook_url)
-
-
-async def on_shutdown(bot: Bot):
-    await bot.delete_webhook()
-
-
-# Wrapper functions for aiogram event handlers
-async def startup_handler(dispatcher, bot):
-    settings = get_settings()
-    await on_startup(bot, settings.webhook_url.rstrip(settings.webhook_path), settings.webhook_path)
-
-
-async def shutdown_handler(dispatcher, bot):
-    await on_shutdown(bot)
-
-
 async def main() -> None:
     settings = get_settings()
     bot = Bot(token=settings.bot_token)
     dp = Dispatcher()
     dp.include_router(router)
 
-    if settings.webhook_url:
-        dp.startup.register(startup_handler)
-        dp.shutdown.register(shutdown_handler)
-
+    if settings.is_production:
+        logging.info("Starting webhook server")
         app = web.Application()
         webhook_requests_handler = SimpleRequestHandler(
             dispatcher=dp,
@@ -60,10 +39,11 @@ async def main() -> None:
         site = web.TCPSite(runner, host=settings.web_server_host, port=settings.web_server_port)
         await site.start()
 
-        logging.info(f"Starting web server on {settings.web_server_host}:{settings.web_server_port}")
+        logging.info(f"Web server is listening on {settings.web_server_host}:{settings.web_server_port}")
         await asyncio.Event().wait()  # Keep the server running
     else:
         logging.info("Starting polling")
+        await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
 
 
